@@ -5,6 +5,7 @@ import { EntityNotFoundError } from 'typeorm';
 import { Response } from 'express';
 import PDFDocument from 'pdfkit';
 import { Workbook } from 'exceljs';
+import ejs from 'ejs';
 
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -13,12 +14,14 @@ import { Post } from '../entities/post.entity';
 import { generateToken, getFileType } from '../shared/utils/app.util';
 import { MailJobService } from '../jobs/mail-job/mai-job.service';
 import { User } from '../entities/user.entity';
+import { PdfService } from '../pdfs/pdf.service';
 
 @Injectable()
 export class PostService {
   constructor(
     private readonly postRepository: PostRepository,
     private readonly mailJobService: MailJobService,
+    private readonly pdfService: PdfService,
   ) {}
 
   async create(
@@ -60,6 +63,39 @@ export class PostService {
     doc.end();
 
     return;
+  }
+
+  async downloadPdf(): Promise<Buffer> {
+    const testData = {
+      date: '10-5-2023',
+      ship: {
+        name: 'abc',
+        companyName: 'xyz',
+        address: 'bca',
+        zipCode: '123',
+        phone: 789,
+        customerId: 'abc123',
+      },
+      bill: {
+        name: 'xyz',
+        companyName: 'zxy',
+        address: 'abc',
+        zipCode: '789',
+        phone: 123,
+        customerId: 'xyz123',
+      },
+    };
+
+    const content = await ejs.renderFile(
+      __dirname + '/../../src/templates/packing-slip.ejs',
+      testData,
+    );
+    const content2 = await ejs.renderFile(
+      __dirname + '/../../src/templates/packing-slip-2.ejs',
+      testData,
+    );
+
+    return await this.pdfService.createPdfs([content, content2], true);
   }
 
   async exportExcel(userId: string) {
