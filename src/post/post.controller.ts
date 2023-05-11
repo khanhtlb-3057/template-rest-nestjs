@@ -71,6 +71,19 @@ export class PostController {
     response.download(`${file}`);
   }
 
+  @Get('download')
+  @Header('Content-Type', 'application/pdf')
+  async downloadPdf(@Res() response: Response) {
+    const downloadFile = await this.postService.downloadPdf();
+
+    response.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="packing-slip.pdf"',
+    });
+
+    return response.send(downloadFile);
+  }
+
   @Get(':id')
   @CheckPermissions([ActionEnum.Read, PostEntity.name])
   findOne(
